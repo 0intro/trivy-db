@@ -9,7 +9,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/samber/oops"
 	bolt "go.etcd.io/bbolt"
-	"go.yaml.in/yaml/v4"
+	"gopkg.in/yaml.v3"
 
 	"github.com/aquasecurity/trivy-db/pkg/db"
 	"github.com/aquasecurity/trivy-db/pkg/types"
