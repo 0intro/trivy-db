@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/josephburnett/jd/v2"
 	"github.com/samber/oops"
 	"go.yaml.in/yaml/v4"
 )
@@ -27,10 +26,11 @@ type Patches struct {
 	overridesDir string
 }
 
-// Patch represents a matched patch that can be applied to content
-type Patch struct {
-	diff jd.Diff
-}
+// Patch is a no-op stub. The upstream version wraps a jd.Diff and uses
+// github.com/josephburnett/jd/v2 to apply JSON patches. The agent only
+// consumes the prebuilt database, so this codepath is never reached
+// at runtime.
+type Patch struct{}
 
 // Load reads config.yaml from the given directory
 func Load(overridesDir string) (*Patches, error) {
@@ -75,49 +75,17 @@ func Load(overridesDir string) (*Patches, error) {
 	return patches, nil
 }
 
-// Match checks if any patch matches the given path.
-// Returns (patch, true) if a match is found, (nil, false) otherwise.
-// The diff file is read when a match is found.
-func (p *Patches) Match(path string) (*Patch, bool, error) {
-	if p == nil {
-		return nil, false, nil
-	}
-
-	normalizedPath := filepath.ToSlash(path)
-	for _, entry := range p.entries {
-		if !strings.HasSuffix(normalizedPath, entry.Target) {
-			continue
-		}
-
-		// Read and parse diff file when matched
-		diffPath := filepath.Join(p.overridesDir, entry.Diff)
-		diff, err := jd.ReadDiffFile(diffPath)
-		if err != nil {
-			return nil, false, oops.With("diff_file", diffPath).Wrapf(err, "failed to read/parse diff file")
-		}
-
-		return &Patch{diff: diff}, true, nil
-	}
-
+// Match never returns a matching patch in this stripped build, so the
+// jd-based diff/apply codepath is unreachable and the dependency drops
+// out of the link.
+func (p *Patches) Match(_ string) (*Patch, bool, error) {
 	return nil, false, nil
 }
 
-// Apply applies the patch to the original content.
-// Returns:
-//   - ([]byte{}, nil) if the file should be deleted (empty result)
-//   - (patched, nil) if the patch was applied successfully
+// Apply returns the input unchanged. Unreachable in practice because
+// Match never returns true.
 func (p *Patch) Apply(original []byte) ([]byte, error) {
-	node, err := jd.ReadJsonString(string(original))
-	if err != nil {
-		return nil, oops.Wrapf(err, "failed to parse original JSON")
-	}
-
-	patched, err := node.Patch(p.diff)
-	if err != nil {
-		return nil, oops.Wrapf(err, "failed to apply patch")
-	}
-
-	return []byte(patched.Json()), nil
+	return original, nil
 }
 
 // Count returns the number of patch entries
