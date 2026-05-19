@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/samber/oops"
-	"go.yaml.in/yaml/v4"
+	"gopkg.in/yaml.v3"
 )
 
 // Config represents the override configuration file
