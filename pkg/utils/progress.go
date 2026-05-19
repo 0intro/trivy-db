@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
-	pb "github.com/cheggaaa/pb/v3"
 )
 
 var (
@@ -37,28 +36,24 @@ func (s *Spinner) Stop() {
 	s.client.Stop()
 }
 
-// TODO: Expose an interface for progressbar
-type ProgressBar struct {
-	client *pb.ProgressBar
-}
+// ProgressBar is a no-op stub. The upstream version wraps
+// github.com/cheggaaa/pb/v3.ProgressBar, whose package-level
+//
+//	var elements = map[string]Element{ "percent": ElementPercent, ... }
+//
+// converts ElementFunc -> Element at init, creating an itab that keeps
+// (*ProgressBar).render -> text/template -> reflect.Value.MethodByName
+// reachable. Once any REFLECTMETHOD function is reachable, the Go
+// linker keeps every exported method of every reachable <UsedInIface>
+// type — see cmd/link/internal/ld/deadcode.go. The agent only consumes
+// the prebuilt database, so the progress UI is never used at runtime.
+type ProgressBar struct{}
 
-func NewProgressBar(total int) *ProgressBar {
-	if Quiet {
-		return &ProgressBar{}
-	}
-	bar := pb.StartNew(total)
-	return &ProgressBar{client: bar}
-}
+// NewProgressBar returns an empty ProgressBar.
+func NewProgressBar(_ int) *ProgressBar { return &ProgressBar{} }
 
-func (p *ProgressBar) Increment() {
-	if p.client == nil {
-		return
-	}
-	p.client.Increment()
-}
-func (p *ProgressBar) Finish() {
-	if p.client == nil {
-		return
-	}
-	p.client.Finish()
-}
+// Increment is a no-op.
+func (p *ProgressBar) Increment() {}
+
+// Finish is a no-op.
+func (p *ProgressBar) Finish() {}
