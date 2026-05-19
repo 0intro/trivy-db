@@ -1,52 +1,31 @@
 package utils
 
-import (
-	"time"
-
-	"github.com/briandowns/spinner"
-)
-
-var (
-	Quiet = false
-)
-
-type Spinner struct {
-	client *spinner.Spinner
-}
-
-func NewSpinner(suffix string) *Spinner {
-	if Quiet {
-		return &Spinner{}
-	}
-	s := spinner.New(spinner.CharSets[36], 100*time.Millisecond)
-	s.Suffix = suffix
-	return &Spinner{client: s}
-}
-
-func (s *Spinner) Start() {
-	if s.client == nil {
-		return
-	}
-	s.client.Start()
-}
-func (s *Spinner) Stop() {
-	if s.client == nil {
-		return
-	}
-	s.client.Stop()
-}
-
-// ProgressBar is a no-op stub. The upstream version wraps
-// github.com/cheggaaa/pb/v3.ProgressBar, whose package-level
+// The upstream version of this file imports github.com/cheggaaa/pb/v3 and
+// github.com/briandowns/spinner to render a CLI progress UI while
+// trivy-db is downloading or building the vulnerability database. Both
+// are never reached by the DataDog Agent (which consumes the prebuilt
+// database), and cheggaaa/pb/v3 in particular reaches text/template ->
+// reflect.Value.MethodByName at init, defeating the Go linker's DCE.
 //
-//	var elements = map[string]Element{ "percent": ElementPercent, ... }
-//
-// converts ElementFunc -> Element at init, creating an itab that keeps
-// (*ProgressBar).render -> text/template -> reflect.Value.MethodByName
-// reachable. Once any REFLECTMETHOD function is reachable, the Go
-// linker keeps every exported method of every reachable <UsedInIface>
-// type — see cmd/link/internal/ld/deadcode.go. The agent only consumes
-// the prebuilt database, so the progress UI is never used at runtime.
+// Stubbing here keeps trivy-db's other packages compiling against the
+// same API while breaking the dependency chain.
+
+// Quiet exists for source compatibility; it has no effect.
+var Quiet = false
+
+// Spinner is a no-op stub.
+type Spinner struct{}
+
+// NewSpinner returns an empty Spinner.
+func NewSpinner(_ string) *Spinner { return &Spinner{} }
+
+// Start is a no-op.
+func (s *Spinner) Start() {}
+
+// Stop is a no-op.
+func (s *Spinner) Stop() {}
+
+// ProgressBar is a no-op stub.
 type ProgressBar struct{}
 
 // NewProgressBar returns an empty ProgressBar.
